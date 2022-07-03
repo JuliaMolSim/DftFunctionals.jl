@@ -4,7 +4,7 @@ CurrentModule = DftFunctionals
 
 # DftFunctionals
 
-Documentation for [DftFunctionals](https://github.com/mfherbst/DftFunctionals.jl).
+Documentation for [DftFunctionals](https://github.com/JuliaMolSim/DftFunctionals.jl).
 
 ```@index
 ```

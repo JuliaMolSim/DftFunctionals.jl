@@ -3,11 +3,17 @@ uuid = "6bd331d2-b28d-4fd3-880e-1a1c7f37947f"
 authors = ["Michael F. Herbst <info@michael-herbst.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+
 [compat]
 julia = "1.6"
+Libxc = "= 0.3.9"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Test  = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Libxc = "66e17ffc-8502-11e9-23b5-c9248d0eb96d"
 
 [targets]
-test = ["Test"]
+test = ["Test", "Libxc"]
