@@ -9,7 +9,7 @@ ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 
 [compat]
 julia = "1.6"
-Libxc = "= 0.3.9"
+Libxc = "0.3"
 
 [extras]
 Test  = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
