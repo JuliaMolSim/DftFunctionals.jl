@@ -5,7 +5,8 @@ import ForwardDiff: Dual
 #       for exchange and correlation ... if it does not help, remove it again
 abstract type Functional{Family,Kind} end
 
-"""Return the family of a functional."""
+"""Return the family of a functional. Results are `:lda`, `:gga`, `:mgga` and
+`:mggal` (Meta-GGA requiring Laplacian of ρ)"""
 family(::Functional{F}) where F = F
 
 """
@@ -19,18 +20,18 @@ function identifier end
 Base.show(io::IO, fun::Functional) = print(io, identifier(fun))
 
 @doc raw"""True if the functional needs ``σ = 𝛁ρ ⋅ 𝛁ρ``."""
-needs_σ(::Functional{F})  where F = (F in (:gga, :mgga, ))
+needs_σ(::Functional{F})  where F = (F in (:gga, :mgga, :mggal))
 
 @doc raw"""True if the functional needs ``τ`` (kinetic energy density"""
-needs_τ(::Functional{F})  where F = (F in (      :mgga, ))
+needs_τ(::Functional{F})  where F = (F in (      :mgga, :mggal))
 
 @doc raw"""True if the functional needs ``Δ ρ``"""
-needs_Δρ(::Functional) = false
+needs_Δρ(::Functional{F}) where F = (F in (             :mggal))
 
 """
 Does this functional support energy evaluations? Some don't, in which case
 energy terms will not be returned by `potential_terms` and `kernel_terms`,
-i.e. `e` will be `nothing`.
+i.e. `e` will be `false` (a strong zero).
 """
 has_energy(::Functional) = true
 
@@ -56,9 +57,9 @@ threshold_ζ(f::Functional, T::Type{<:Dual}) = threshold_ζ(f, ForwardDiff.valty
 # Silently drop extra arguments from evaluation functions
 for fun in (:potential_terms, :kernel_terms)
     @eval begin
-        $fun(func::Functional{:lda},  ρ, σ, args...)    = $fun(func, ρ)
-        $fun(func::Functional{:gga},  ρ, σ, τ, args...) = $fun(func, ρ, σ)
-        $fun(func::Functional{:mgga}, ρ, σ, τ, Δρ)      = $fun(func, ρ, σ, τ)
+        $fun(func::Functional{:lda},  ρ, σ, args...)        = $fun(func, ρ)
+        $fun(func::Functional{:gga},  ρ, σ, τ, args...)     = $fun(func, ρ, σ)
+        $fun(func::Functional{:mgga}, ρ, σ, τ, Δρ, args...) = $fun(func, ρ, σ, τ)
     end
 end
 
