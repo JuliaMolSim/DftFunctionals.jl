@@ -8,12 +8,13 @@ DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 
 [compat]
-julia = "1.6"
+ForwardDiff = "0.10"
 Libxc = "0.3"
+julia = "1.6"
 
 [extras]
-Test  = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Libxc = "66e17ffc-8502-11e9-23b5-c9248d0eb96d"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "Libxc"]
