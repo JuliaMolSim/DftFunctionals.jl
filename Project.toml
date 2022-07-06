@@ -1,6 +1,6 @@
 name = "DftFunctionals"
 uuid = "6bd331d2-b28d-4fd3-880e-1a1c7f37947f"
-authors = ["Michael F. Herbst <info@michael-herbst.com> and contributors"]
+authors = ["Michael F. Herbst <info@michael-herbst.com>"]
 version = "0.1.0"
 
 [deps]
@@ -9,11 +9,13 @@ ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 
 [compat]
 julia = "1.6"
-Libxc = "0.3"
+DiffResults = "1"
+ForwardDiff = "0.10"
+Libxc_jll = "5.1.0"
 
 [extras]
 Test  = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Libxc = "66e17ffc-8502-11e9-23b5-c9248d0eb96d"
+Libxc_jll = "a56a6d9d-ad03-58af-ab61-878bf78270d6"
 
 [targets]
-test = ["Test", "Libxc"]
+test = ["Test", "Libxc_jll"]

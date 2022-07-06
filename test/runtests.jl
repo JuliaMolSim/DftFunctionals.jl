@@ -1,16 +1,6 @@
 using DftFunctionals
 using Test
-import Libxc
-
-# Helper function to setup functionals in Libxc_jll using Libxc.jl
-function libxc_functional(identifier::Symbol; n_spin=1)
-    pointer = Libxc.xc_func_alloc()
-    number  = Libxc.xc_functional_get_number(string(identifier))
-    @assert number ≥ 0
-    ret = Libxc.xc_func_init(pointer, number, n_spin)
-    @assert ret == 0
-    pointer
-end
+include("libxc.jl")
 
 @testset "DftFunctionals.jl" begin
     gga_fallback = (
@@ -97,10 +87,9 @@ end
             Vref  = similar(ρ)
             V2ref = similar(ρ)
 
-            libxc = libxc_functional(identifier(func))
-            Libxc.xc_lda(libxc, n_p, ρ, εref, Vref, V2ref, C_NULL, C_NULL)
-            Libxc.xc_func_end(libxc)
-            Libxc.xc_func_free(libxc)
+            ptr = xc_functional_alloc(identifier(func))
+            xc_lda(ptr, n_p, ρ, εref, Vref, V2ref, C_NULL, C_NULL)
+            xc_functional_free(ptr)
 
             eref  = εref .* ρ[1, :]
             V2ref = reshape(V2ref, 1, 1, :)
@@ -137,11 +126,11 @@ end
             Vρσref = similar(ρ)
             Vσσref = similar(ρ)
 
-            libxc = libxc_functional(identifier(func))
-            Libxc.xc_gga(libxc, n_p, ρ, σ, εref, Vρref, Vσref, Vρρref, Vρσref, Vσσref, C_NULL,
-                         C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL)
-            Libxc.xc_func_end(libxc)
-            Libxc.xc_func_free(libxc)
+
+            ptr = xc_functional_alloc(identifier(func))
+            xc_gga(ptr, n_p, ρ, σ, εref, Vρref, Vσref, Vρρref, Vρσref, Vσσref, C_NULL,
+                   C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL)
+            xc_functional_free(ptr)
 
             eref  = εref .* ρ[1, :]
             Vρρref = reshape(Vρρref, 1, 1, :)

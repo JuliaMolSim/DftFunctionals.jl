@@ -3,7 +3,7 @@ end
 identifier(::DftFunctional{I}) where {I} = I
 
 
-function DftFunctional{Identifier}(args...; kwargs...) where {Identifier}
+function DftFunctional{Identifier}() where {Identifier}
     id = string(Identifier)
     # TODO What about hybrids -> should not cause a different family,
     #      but it needs to be flagged somehow that this is a hybrid, e.g. as a field.
