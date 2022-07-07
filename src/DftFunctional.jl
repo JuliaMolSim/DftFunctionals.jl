@@ -12,8 +12,8 @@ function DftFunctional{Identifier}() where {Identifier}
 
     Family = Symbol(family)
     Kind   = Symbol(kind)
-    @assert Family in (:lda, :gga)  # :mgga and :mggal unsupported in fallbacks
-    @assert Kind   in (:x, :c)  # :k and :xc currently unsupported in fallbacks
+    @assert Family in (:lda, :gga)   # :mgga and :mggal unsupported in fallbacks
+    @assert Kind   in (:x, :c, :xc)  # :k currently unsupported in fallbacks
     DftFunctional{Identifier,Family,Kind}()
 end
 
