@@ -102,11 +102,7 @@ end
 
             # Check floating-point type consistency:
             e = DftFunctionals.energy(func, rand(Float32))
-            if identifier(func) == :lda_c_pw
-                @test_broken eltype(e) == Float32  # TODO Fix this!
-            else
-                @test eltype(e) == Float32
-            end
+            @test eltype(e) == Float32
         end
     end
 end
