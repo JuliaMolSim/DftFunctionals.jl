@@ -152,4 +152,11 @@ end
     end
 end
 
+@testset "Test spinindex_σ" begin
+    @test spinindex_σ(1, 1) == 1
+    @test spinindex_σ(1, 2) == 2
+    @test spinindex_σ(2, 1) == 2
+    @test spinindex_σ(2, 2) == 3
+end
+
 end
