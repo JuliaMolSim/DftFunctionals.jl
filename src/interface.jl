@@ -19,13 +19,19 @@ kind(::Functional{F,K}) where {F,K} = K
 function identifier end
 Base.show(io::IO, fun::Functional) = print(io, identifier(fun))
 
-@doc raw"""True if the functional needs ``σ = 𝛁ρ ⋅ 𝛁ρ``."""
+@doc raw"""
+True if the functional needs ``σ = 𝛁ρ ⋅ 𝛁ρ``.
+"""
 needs_σ(::Functional{F})  where F = (F in (:gga, :mgga, :mggal, ))
 
-@doc raw"""True if the functional needs ``τ`` (kinetic energy density"""
+@doc raw"""
+True if the functional needs ``τ`` (kinetic energy density).
+"""
 needs_τ(::Functional{F})  where F = (F in (      :mgga, :mggal, ))
 
-@doc raw"""True if the functional needs ``Δ ρ``"""
+@doc raw"""
+True if the functional needs ``Δ ρ``.
+"""
 needs_Δρ(::Functional{F}) where F = (F in (             :mggal, ))
 
 """

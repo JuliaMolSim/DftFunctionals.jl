@@ -17,8 +17,9 @@ function DftFunctional{Identifier}() where {Identifier}
     DftFunctional{Identifier,Family,Kind}()
 end
 
-"""A generic DFT functional implementation. Valid identifiers `Id` are the
-ones supported by Libxc (https://tddft.org/programs/libxc) as symbols,
+"""
+A generic DFT functional implementation. Valid identifiers `Id` are the
+ones supported by [Libxc](https://tddft.org/programs/libxc) as symbols,
 e.g. `:lda_x`, `hyb_gga_xc_b3lyp`.
 """
 DftFunctional(Id::Symbol, args...; kwargs...) = DftFunctional{Id}(args...; kwargs...)
