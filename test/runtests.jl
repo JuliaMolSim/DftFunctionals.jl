@@ -1,4 +1,5 @@
 using DftFunctionals
+using ComponentArrays
 using Test
 include("libxc.jl")
 
@@ -155,4 +156,46 @@ end
     @test spinindex_σ(2, 2) == 3
 end
 
+@testset "PBE functionals" begin
+    pbe = DftFunctional(:gga_x_pbe)
+    @test :μ in keys(parameters(pbe))
+    @test :κ in keys(parameters(pbe))
+
+    pbemod = change_parameters(pbe, ComponentArray(;μ=12, κ=1.2))
+    @test parameters(pbemod).μ == 12
+    @test parameters(pbemod).κ == 1.2
+
+    pbemod = change_parameters(DftFunctional(:gga_c_pbe), ComponentArray(;β=12, γ=1.2))
+    @test parameters(pbemod).β == 12
+    @test parameters(pbemod).γ == 1.2
+
+    μ = rand()
+    @test μ ≈ DftFunctionals.pbe_μ_from_β(DftFunctionals.pbe_β_from_μ(μ))
+end
+
+@testset "PBE parameter derivatives" begin
+    using ForwardDiff
+
+    pbe = DftFunctional(:gga_x_pbe)
+
+    ρ = [0.1, 0.2, 0.3, 0.4, 0.5]
+    σ = [0.2, 0.3, 0.4, 0.5, 0.6]
+    ρ = reshape(ρ, 1, :)
+    σ = reshape(σ, 1, :)
+
+    θ = ComponentArray(; parameters(pbe)...)
+    egrad = ForwardDiff.jacobian(θ) do θ
+        potential_terms(change_parameters(pbe, θ), ρ, σ).e
+    end
+
+    egrad_fd = let ε=1e-5
+        δ = zero(θ)
+        δ[2] = ε
+
+        (  potential_terms(change_parameters(pbe, θ + δ), ρ, σ).e
+         - potential_terms(change_parameters(pbe, θ - δ), ρ, σ).e) / 2ε
+    end
+
+    @test maximum(abs, egrad[:, 2] - egrad_fd) < 1e-5
+end
 end

@@ -5,6 +5,7 @@ import ForwardDiff: Dual
 #       for exchange and correlation ... if it does not help, remove it again
 abstract type Functional{Family,Kind} end
 
+
 """Return the family of a functional. Results are `:lda`, `:gga`, `:mgga` and
 `:mggal` (Meta-GGA requiring Laplacian of ρ)"""
 family(::Functional{F}) where F = F
@@ -40,6 +41,22 @@ energy terms will not be returned by `potential_terms` and `kernel_terms`,
 i.e. `e` will be `false` (a strong zero).
 """
 has_energy(::Functional) = true
+
+"""
+Return adjustable parameters of the functional and their values.
+"""
+parameters(::Functional) = ComponentArray{Bool}()
+
+"""Return the type used to represent the [`parameters`](@ref) in the functional"""
+parameter_type(f::Functional) = eltype(parameters(f))
+
+"""
+Return a new version of the passed functional with its parameters adjusted.
+This may not be a copy in case no changes are done to its internal parameters.
+To get the tuple of adjustable parameters and their current values check out
+[`parameters`](@ref). It is not checked that the correct parameters are passed.
+"""
+change_parameters(f::Functional, ::ComponentArray; keep_identifier=false) = f
 
 
 # TODO These values are read-only for now and their defaults hard-coded for Float64
@@ -95,12 +112,13 @@ function kernel_terms end
 #
 # LDA
 #
-function potential_terms(func::Functional{:lda}, ρ::AbstractMatrix)
+function potential_terms(func::Functional{:lda}, ρ::AbstractMatrix{T}) where {T}
     @assert has_energy(func)  # Otherwise custom implementation of this function needed
     s_ρ, n_p = size(ρ)
+    TT = promote_type(T, parameter_type(func))
 
-    e  = similar(ρ,      n_p)
-    Vρ = similar(ρ, s_ρ, n_p)
+    e  = similar(ρ, TT,      n_p)
+    Vρ = similar(ρ, TT, s_ρ, n_p)
     @views for i in 1:n_p
         potential_terms!(e[i:i], Vρ[:, i], func, ρ[:, i])
     end
@@ -116,10 +134,11 @@ end
 function kernel_terms(func::Functional{:lda}, ρ::AbstractMatrix{T}) where {T}
     @assert has_energy(func)
     s_ρ, n_p = size(ρ)
+    TT = promote_type(T, parameter_type(func))
 
-    e   = similar(ρ,           n_p)
-    Vρ  = similar(ρ, s_ρ,      n_p)
-    Vρρ = similar(ρ, s_ρ, s_ρ, n_p)
+    e   = similar(ρ, TT,           n_p)
+    Vρ  = similar(ρ, TT, s_ρ,      n_p)
+    Vρρ = similar(ρ, TT, s_ρ, s_ρ, n_p)
 
     # TODO Needed to make forward-diff work with !isbits floating-point types (e.g. BigFloat)
     Vρ  .= zero(T)
@@ -155,7 +174,7 @@ function potential_terms(func::Functional{:gga}, ρ::AbstractMatrix{T},
     @assert has_energy(func)  # Otherwise custom implementation of this function needed
     s_ρ, n_p = size(ρ)
     s_σ = size(σ, 1)
-    TT = promote_type(T, U)
+    TT = promote_type(T, U, parameter_type(func))
 
     e  = similar(ρ, TT,      n_p)
     Vρ = similar(ρ, TT, s_ρ, n_p)
@@ -181,7 +200,7 @@ function kernel_terms(func::Functional{:gga}, ρ::AbstractMatrix{T},
     @assert has_energy(func)  # Otherwise custom implementation of this function needed
     s_ρ, n_p = size(ρ)
     s_σ = size(σ, 1)
-    TT = promote_type(T, U)
+    TT = promote_type(T, U, parameter_type(func))
 
     e   = similar(ρ, TT,           n_p)
     Vρ  = similar(ρ, TT, s_ρ,      n_p)
