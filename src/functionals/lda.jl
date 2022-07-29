@@ -1,8 +1,12 @@
-const LdaExchange = DftFunctional{:lda_x,:lda,:x}
+struct LdaExchange <: Functional{:lda, :x}
+end
+identifier(::LdaExchange) = :lda_x
 
 """
 LDA Slater exchange (DOI: 10.1017/S0305004100016108 and 10.1007/BF01340281)
 """
+DftFunctional(::Val{:lda_x}) = LdaExchange()
+
 function energy(::LdaExchange, ρ::T) where {T <: Number}
     # Severe numerical issues if this is not done at least at Float64
     W = promote_type(Float64, T)
@@ -16,13 +20,21 @@ function energy(fun::Functional{:lda,:c}, ρ::T; kwargs...) where {T <: Number}
     energy_per_particle(fun, ρ; kwargs...) * ρ
 end
 
+#
+# LdaCorrelationVwn
+#
+struct LdaCorrelationVwn <: Functional{:lda,:c}
+end
+identifier(::LdaCorrelationVwn) = :lda_c_vwn
 
 """
 VWN5 LDA correlation according to Vosko, Wilk, and Nusair, (DOI 10.1139/p80-159).
 """
-function energy_per_particle(::DftFunctional{:lda_c_vwn}, ρ::T) where {T <: Number}
+DftFunctional(::Val{:lda_c_vwn}) = LdaCorrelationVwn()
+
+function energy_per_particle(::LdaCorrelationVwn, ρ::T) where {T <: Number}
     # From https://math.nist.gov/DFTdata/atomdata/node5.html
-    A   = T( 0.0310907)
+    A   = T( 0.0310907)  # TODO These should probably become proper parameters
     x0  = T(-0.10498)
     b   = T( 3.72744)
     c   = T( 12.9352)
@@ -35,22 +47,20 @@ function energy_per_particle(::DftFunctional{:lda_c_vwn}, ρ::T) where {T <: Num
 end
 
 
-
 #
 # LdaCorrelationPw
 #
 struct LdaCorrelationPw{Improved} <: Functional{:lda, :c}
 end
-LdaCorrelationPw(; improved=true) = LdaCorrelationPw{improved}()
-identifier(pbe::LdaCorrelationPw) = :lda_c_pw
-DftFunctional{:lda_c_pw}(;kwargs...) = LdaCorrelationPw(;kwargs...)
-
+identifier(::LdaCorrelationPw) = :lda_c_pw
 
 """
 Perdew, Wang correlation from 1992 (10.1103/PhysRevB.45.13244)
 """
+DftFunctional(::Val{:lda_c_pw}; improved=true) = LdaCorrelationPw{improved}()
+
 function energy_per_particle(::LdaCorrelationPw{Improved}, ρ::T) where {T<:Number, Improved}
-    α₁ = T.((0.21370,  0.20548,  0.11125))
+    α₁ = T.((0.21370,  0.20548,  0.11125))  # TODO These should probably become proper parameters
     β₁ = T.((7.5957,  14.1189,  10.357  ))
     β₂ = T.((3.5876,   6.1977,   3.6231 ))
     β₃ = T.((1.6382,   3.3662,   0.88026))
