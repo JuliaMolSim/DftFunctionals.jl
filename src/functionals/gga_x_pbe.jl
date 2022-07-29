@@ -1,14 +1,16 @@
-struct PbeExchange{CA} <: Functional{:gga, :x} where {CA <: ComponentArray}
-    identifier::Symbol
+struct PbeExchange{CA} <: Functional{:gga, :x} where {CA <: ComponentArray{<:Number}}
     parameters::CA
+    identifier::Symbol
 end
-PbeExchange(parameters::ComponentArray) = PbeExchange(:gga_x_pbe_custom, parameters)
+function PbeExchange(parameters::ComponentArray)
+    PbeExchange(parameters, :gga_x_pbe_custom)
+end
 
 identifier(pbe::PbeExchange) = pbe.identifier
 parameters(pbe::PbeExchange) = pbe.parameters
 function change_parameters(pbe::PbeExchange, parameters::ComponentArray; keep_identifier=false)
     if keep_identifier
-        PbeExchange(pbe.identifier, parameters)
+        PbeExchange(parameters, pbe.identifier)
     else
         PbeExchange(parameters)
     end
@@ -43,7 +45,7 @@ Standard PBE exchange.
 Perdew, Burke, Ernzerhof 1996 (DOI: 10.1103/PhysRevLett.77.3865)
 """
 function DftFunctional(::Val{:gga_x_pbe})
-    PbeExchange(:gga_x_pbe, ComponentArray(κ=0.8040, μ=pbe_μ_from_β(0.06672455060314922)))
+    PbeExchange(ComponentArray(κ=0.8040, μ=pbe_μ_from_β(0.06672455060314922)), :gga_x_pbe)
 end
 
 """
@@ -51,7 +53,7 @@ Revised PBE exchange.
 Zhang, Yang 1998 (DOI 10.1103/physrevlett.80.890)
 """
 function DftFunctional(::Val{:gga_x_pbe_r})
-    PbeExchange(:gga_x_pbe_r, ComponentArray(κ=1.245, μ=pbe_μ_from_β(0.06672455060314922)))
+    PbeExchange(ComponentArray(κ=1.245, μ=pbe_μ_from_β(0.06672455060314922)), :gga_x_pbe_r)
 end
 
 """
@@ -59,7 +61,7 @@ XPBE exchange.
 Xu, Goddard 2004 (DOI 10.1063/1.1771632)
 """
 function DftFunctional(::Val{:gga_x_xpbe})
-    PbeExchange(:gga_x_xpbe, ComponentArray(κ=0.91954, μ=0.23214))  # Table 1
+    PbeExchange(ComponentArray(κ=0.91954, μ=0.23214), :gga_x_xpbe)  # Table 1
 end
 
 """
@@ -68,7 +70,7 @@ Perdew, Ruzsinszky, Csonka and others 2008 (DOI 10.1103/physrevlett.100.136406)
 """
 function DftFunctional(::Val{:gga_x_pbe_sol})
     # μ given below equation (2)
-    PbeExchange(:gga_x_pbe_sol, ComponentArray(κ=0.8040, μ=10/81))
+    PbeExchange(ComponentArray(κ=0.8040, μ=10/81), :gga_x_pbe_sol)
 end
 
 """
@@ -77,7 +79,7 @@ Constantin, Fabiano, Laricchia 2011 (DOI 10.1103/physrevlett.106.186406)
 """
 function DftFunctional(::Val{:gga_x_apbe})
     # p. 1, right column, bottom
-    PbeExchange(:gga_x_apbe, ComponentArray(κ=0.8040, μ=0.260))
+    PbeExchange(ComponentArray(κ=0.8040, μ=0.260), :gga_x_apbe)
 end
 
 """
@@ -86,7 +88,7 @@ del Campo, Gazqez, Trickey and others 2012 (DOI 10.1063/1.3691197)
 """
 function DftFunctional(::Val{:gga_x_pbe_mol})
     # p. 4, left column, bottom
-    PbeExchange(:gga_x_pbe_mol, ComponentArray(κ=0.8040, μ=0.27583))
+    PbeExchange(ComponentArray(κ=0.8040, μ=0.27583), :gga_x_pbe_mol)
 end
 
 """
@@ -94,5 +96,5 @@ PBEfe exchange.
 Sarmiento-Perez, Silvana, Marques 2015 (DOI 10.1021/acs.jctc.5b00529)
 """
 function DftFunctional(::Val{:gga_x_pbefe})
-    PbeExchange(:gga_x_pbefe, ComponentArray(κ=0.437, μ=0.346))  # Table 1
+    PbeExchange(ComponentArray(κ=0.437, μ=0.346), :gga_x_pbefe)  # Table 1
 end

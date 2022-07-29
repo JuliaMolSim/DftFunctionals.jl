@@ -240,12 +240,11 @@ end
 function energy(func::Functional{:gga}, ρ::AbstractVector{T}, σ::AbstractVector{U}) where {T,U}
     length(ρ) == 1 || error("Multiple spins not yet implemented for fallback functionals")
     @assert length(ρ) == 1
-    TT = promote_type(T, U)
 
     ρtotal = ρ[1]
     σtotal = σ[1]
     if ρtotal ≤ threshold_ρ(func, T)
-        zero(TT)
+        zero(promote_type(T, U, parameter_type(func)))
     else
         σstable = max(σtotal, threshold_σ(func, U))
         energy(func, ρtotal, σstable)
