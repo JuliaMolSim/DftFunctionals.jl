@@ -97,9 +97,9 @@ end
 
             # Compute in fallback implementation in elevated precision
             result = kernel_terms(func, Array{BigFloat}(ρ))
-            @test result.e   ≈ eref  atol=5e-15
-            @test result.Vρ  ≈ Vref  atol=5e-15
-            @test result.Vρρ ≈ V2ref atol=5e-14
+            @test result.e   ≈ eref  atol=5e-13
+            @test result.Vρ  ≈ Vref  atol=5e-13
+            @test result.Vρρ ≈ V2ref atol=5e-13
 
             # Check floating-point type consistency:
             e = DftFunctionals.energy(func, rand(Float32))
@@ -136,12 +136,12 @@ end
 
             # Compute in fallback implementation in elevated precision
             result = kernel_terms(func, Array{BigFloat}(ρ), Array{BigFloat}(σ))
-            @test result.e    ≈ eref   atol=5e-15
-            @test result.Vρ   ≈ Vρref  atol=5e-15
-            @test result.Vσ   ≈ Vσref  atol=5e-15
+            @test result.e    ≈ eref   atol=5e-13
+            @test result.Vρ   ≈ Vρref  atol=5e-13
+            @test result.Vσ   ≈ Vσref  atol=5e-13
             @test result.Vρρ  ≈ Vρρref atol=5e-13
-            @test result.Vρσ  ≈ Vρσref atol=5e-14
-            @test result.Vσσ  ≈ Vσσref atol=5e-14
+            @test result.Vρσ  ≈ Vρσref atol=5e-13
+            @test result.Vσσ  ≈ Vσσref atol=5e-13
 
             e = DftFunctionals.energy(func, rand(Float32), rand(Float32))
             @test_broken eltype(e) == Float32
