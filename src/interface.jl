@@ -52,10 +52,12 @@ parameter_type(f::Functional) = eltype(parameters(f))
 """
 Return a new version of the passed functional with its parameters adjusted.
 This may not be a copy in case no changes are done to its internal parameters.
+Generally the identifier of the functional will be changed to reflect the
+change in parameter values unless `keep_identifier` is true.
 To get the tuple of adjustable parameters and their current values check out
 [`parameters`](@ref). It is not checked that the correct parameters are passed.
 """
-change_parameters(f::Functional, ::ComponentArray; keep_identifier=false) = f
+change_parameters(f::Functional, ::AbstractArray; keep_identifier=false) = f
 
 # TODO These values are read-only for now and their defaults hard-coded for Float64
 """
