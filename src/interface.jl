@@ -5,10 +5,9 @@ import ForwardDiff: Dual
 #       for exchange and correlation ... if it does not help, remove it again
 abstract type Functional{Family,Kind} end
 
-
 """Return the family of a functional. Results are `:lda`, `:gga`, `:mgga` and
 `:mggal` (Meta-GGA requiring Laplacian of ρ)"""
-family(::Functional{F}) where F = F
+family(::Functional{F}) where {F} = F
 
 """
 Return the functional kind: `:x` (exchange), `:c` (correlation), `:k` (kinetic) or
@@ -23,17 +22,17 @@ Base.show(io::IO, fun::Functional) = print(io, identifier(fun))
 @doc raw"""
 True if the functional needs ``σ = 𝛁ρ ⋅ 𝛁ρ``.
 """
-needs_σ(::Functional{F})  where F = (F in (:gga, :mgga, :mggal, ))
+needs_σ(::Functional{F}) where {F} = (F in (:gga, :mgga, :mggal))
 
 @doc raw"""
 True if the functional needs ``τ`` (kinetic energy density).
 """
-needs_τ(::Functional{F})  where F = (F in (      :mgga, :mggal, ))
+needs_τ(::Functional{F}) where {F} = (F in (:mgga, :mggal))
 
 @doc raw"""
 True if the functional needs ``Δ ρ``.
 """
-needs_Δρ(::Functional{F}) where F = (F in (             :mggal, ))
+needs_Δρ(::Functional{F}) where {F} = (F in (:mggal,))
 
 """
 Does this functional support energy evaluations? Some don't, in which case
@@ -58,17 +57,16 @@ To get the tuple of adjustable parameters and their current values check out
 """
 change_parameters(f::Functional, ::ComponentArray; keep_identifier=false) = f
 
-
 # TODO These values are read-only for now and their defaults hard-coded for Float64
 """
 Threshold for the density (below this value, functionals and derivatives
 evaluate to zero). The threshold may depend on the floating-point type used
 to represent densities and potentials, which is passed as the second argument.
 """
-threshold_ρ(::Functional,  T=Float64) = T(1e-15)  # TODO This might differ between functionals
-threshold_σ(f::Functional, T=Float64) = threshold_ρ(f, T)^(4//3)
-threshold_τ(::Functional,  T=Float64) = T(1e-20)
-threshold_ζ(::Functional,  T=Float64) = eps(T)
+threshold_ρ(::Functional, T=Float64) = T(1e-15)  # TODO This might differ between functionals
+threshold_σ(f::Functional, T=Float64) = threshold_ρ(f, T)^(4 // 3)
+threshold_τ(::Functional, T=Float64)  = T(1e-20)
+threshold_ζ(::Functional, T=Float64)  = eps(T)
 
 # Drop dual types from threshold functions
 threshold_ρ(f::Functional, T::Type{<:Dual}) = threshold_ρ(f, ForwardDiff.valtype(T))
@@ -76,16 +74,14 @@ threshold_σ(f::Functional, T::Type{<:Dual}) = threshold_σ(f, ForwardDiff.valty
 threshold_τ(f::Functional, T::Type{<:Dual}) = threshold_τ(f, ForwardDiff.valtype(T))
 threshold_ζ(f::Functional, T::Type{<:Dual}) = threshold_ζ(f, ForwardDiff.valtype(T))
 
-
 # Silently drop extra arguments from evaluation functions
 for fun in (:potential_terms, :kernel_terms)
     @eval begin
-        $fun(func::Functional{:lda},  ρ, σ, args...)        = $fun(func, ρ)
-        $fun(func::Functional{:gga},  ρ, σ, τ, args...)     = $fun(func, ρ, σ)
+        $fun(func::Functional{:lda}, ρ, σ, args...)         = $fun(func, ρ)
+        $fun(func::Functional{:gga}, ρ, σ, τ, args...)      = $fun(func, ρ, σ)
         $fun(func::Functional{:mgga}, ρ, σ, τ, Δρ, args...) = $fun(func, ρ, σ, τ)
     end
 end
-
 
 @doc raw"""
     potential_terms(f::Functional, ρ, [σ, τ, Δρ])
@@ -97,7 +93,6 @@ Returns a named tuple with keys `e` (Energy per unit volume),
 `Vτ` (``\frac{∂e}{∂τ}``), `Vl` (``\frac{∂e}{∂(Δρ)}``).
 """
 function potential_terms end
-
 
 @doc raw"""
     kernel_terms(f::Functional, ρ, [σ, τ, Δρ])
@@ -117,9 +112,9 @@ function potential_terms(func::Functional{:lda}, ρ::AbstractMatrix{T}) where {T
     s_ρ, n_p = size(ρ)
     TT = promote_type(T, parameter_type(func))
 
-    e  = similar(ρ, TT,      n_p)
+    e  = similar(ρ, TT, n_p)
     Vρ = similar(ρ, TT, s_ρ, n_p)
-    @views for i in 1:n_p
+    @views for i = 1:n_p
         potential_terms!(e[i:i], Vρ[:, i], func, ρ[:, i])
     end
     (; e, Vρ)
@@ -136,15 +131,15 @@ function kernel_terms(func::Functional{:lda}, ρ::AbstractMatrix{T}) where {T}
     s_ρ, n_p = size(ρ)
     TT = promote_type(T, parameter_type(func))
 
-    e   = similar(ρ, TT,           n_p)
-    Vρ  = similar(ρ, TT, s_ρ,      n_p)
+    e   = similar(ρ, TT, n_p)
+    Vρ  = similar(ρ, TT, s_ρ, n_p)
     Vρρ = similar(ρ, TT, s_ρ, s_ρ, n_p)
 
     # TODO Needed to make forward-diff work with !isbits floating-point types (e.g. BigFloat)
     Vρ  .= zero(T)
     Vρρ .= zero(T)
 
-    @views for i in 1:n_p
+    @views for i = 1:n_p
         kernel_terms!(e[i:i], Vρ[:, i], Vρρ[:, :, i], func, ρ[:, i])
     end
     (; e, Vρ, Vρρ)
@@ -176,10 +171,10 @@ function potential_terms(func::Functional{:gga}, ρ::AbstractMatrix{T},
     s_σ = size(σ, 1)
     TT = promote_type(T, U, parameter_type(func))
 
-    e  = similar(ρ, TT,      n_p)
+    e  = similar(ρ, TT, n_p)
     Vρ = similar(ρ, TT, s_ρ, n_p)
     Vσ = similar(ρ, TT, s_σ, n_p)
-    @views for i in 1:n_p
+    @views for i = 1:n_p
         potential_terms!(e[i:i], Vρ[:, i], Vσ[:, i], func, ρ[:, i], σ[:, i])
     end
     (; e, Vρ, Vσ)
@@ -194,7 +189,6 @@ function potential_terms!(e, Vρ, Vσ, func::Functional{:gga},
     nothing
 end
 
-
 function kernel_terms(func::Functional{:gga}, ρ::AbstractMatrix{T},
                       σ::AbstractMatrix{U}) where {T,U}
     @assert has_energy(func)  # Otherwise custom implementation of this function needed
@@ -202,9 +196,9 @@ function kernel_terms(func::Functional{:gga}, ρ::AbstractMatrix{T},
     s_σ = size(σ, 1)
     TT = promote_type(T, U, parameter_type(func))
 
-    e   = similar(ρ, TT,           n_p)
-    Vρ  = similar(ρ, TT, s_ρ,      n_p)
-    Vσ  = similar(ρ, TT, s_σ,      n_p)
+    e   = similar(ρ, TT, n_p)
+    Vρ  = similar(ρ, TT, s_ρ, n_p)
+    Vσ  = similar(ρ, TT, s_σ, n_p)
     Vρρ = similar(ρ, TT, s_ρ, s_ρ, n_p)
     Vρσ = similar(ρ, TT, s_ρ, s_σ, n_p)
     Vσσ = similar(ρ, TT, s_σ, s_σ, n_p)
@@ -216,7 +210,7 @@ function kernel_terms(func::Functional{:gga}, ρ::AbstractMatrix{T},
     Vρσ .= zero(TT)
     Vσσ .= zero(TT)
 
-    @views for i in 1:n_p
+    @views for i = 1:n_p
         kernel_terms!(e[i:i], Vρ[:, i], Vσ[:, i],
                       Vρρ[:, :, i], Vρσ[:, :, i], Vσσ[:, :, i],
                       func, ρ[:, i], σ[:, i])
@@ -237,7 +231,8 @@ function kernel_terms!(e, Vρ, Vσ, Vρρ, Vρσ, Vσσ, func::Functional{:gga},
     nothing
 end
 
-function energy(func::Functional{:gga}, ρ::AbstractVector{T}, σ::AbstractVector{U}) where {T,U}
+function energy(func::Functional{:gga}, ρ::AbstractVector{T},
+                σ::AbstractVector{U}) where {T,U}
     length(ρ) == 1 || error("Multiple spins not yet implemented for fallback functionals")
     @assert length(ρ) == 1
 

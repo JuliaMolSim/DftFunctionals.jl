@@ -1,4 +1,4 @@
-struct PbeExchange{CA} <: Functional{:gga, :x} where {CA <: ComponentArray{<:Number}}
+struct PbeExchange{CA} <: Functional{:gga,:x} where {CA<:ComponentArray{<:Number}}
     parameters::CA
     identifier::Symbol
 end
@@ -8,7 +8,8 @@ end
 
 identifier(pbe::PbeExchange) = pbe.identifier
 parameters(pbe::PbeExchange) = pbe.parameters
-function change_parameters(pbe::PbeExchange, parameters::ComponentArray; keep_identifier=false)
+function change_parameters(pbe::PbeExchange, parameters::ComponentArray;
+                           keep_identifier=false)
     if keep_identifier
         PbeExchange(parameters, pbe.identifier)
     else
@@ -16,8 +17,7 @@ function change_parameters(pbe::PbeExchange, parameters::ComponentArray; keep_id
     end
 end
 
-
-function energy(pbe::PbeExchange, ρ::T, σ::U) where {T <: Number, U <: Number}
+function energy(pbe::PbeExchange, ρ::T, σ::U) where {T<:Number,U<:Number}
     TT = promote_type(T, U, parameter_type(pbe))
     κ = TT(pbe.parameters.κ)
     μ = TT(pbe.parameters.μ)
@@ -26,15 +26,14 @@ function energy(pbe::PbeExchange, ρ::T, σ::U) where {T <: Number, U <: Number}
     # rₛ = cbrt(3 / (4π  * ρ))                 # page 2, left column, top
     # kF = cbrt(3π^2 * ρ)                      # page 2, left column, top
     # s  = sqrt(σ) / (2kF * ρ)                 # below (9)
-    s² = σ / ( ρ^(4/3) * 2cbrt(3π^2) )^2
+    s² = σ / (ρ^(4 / 3) * 2cbrt(3π^2))^2
 
     energy(LdaExchange(), ρ) * pbe_x_f(s²)     # (10)
 end
 
 # Conversion between μ and β (some authors use one, some the other)
-pbe_μ_from_β(β) = β/3 * π^2
+pbe_μ_from_β(β) = β / 3 * π^2
 pbe_β_from_μ(μ) = 3μ / π^2
-
 
 #
 # Concrete functionals
@@ -70,7 +69,7 @@ Perdew, Ruzsinszky, Csonka and others 2008 (DOI 10.1103/physrevlett.100.136406)
 """
 function DftFunctional(::Val{:gga_x_pbe_sol})
     # μ given below equation (2)
-    PbeExchange(ComponentArray(κ=0.8040, μ=10/81), :gga_x_pbe_sol)
+    PbeExchange(ComponentArray(κ=0.8040, μ=10 / 81), :gga_x_pbe_sol)
 end
 
 """
