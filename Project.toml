@@ -9,7 +9,7 @@ DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 
 [compat]
-ComponentArrays = "0.12"
+ComponentArrays = "0.12, 0.13"
 DiffResults = "1"
 ForwardDiff = "0.10"
 Libxc_jll = "5.1.0"
