@@ -81,6 +81,7 @@ for fun in (:potential_terms, :kernel_terms)
     @eval begin
         $fun(func::Functional{:lda}, ρ, σ, args...)         = $fun(func, ρ)
         $fun(func::Functional{:gga}, ρ, σ, τ, args...)      = $fun(func, ρ, σ)
+        $fun(func::Functional{:hyb_gga}, ρ, σ, τ, args...)  = $fun(func, ρ, σ)
         $fun(func::Functional{:mgga}, ρ, σ, τ, Δρ, args...) = $fun(func, ρ, σ, τ)
     end
 end
@@ -246,4 +247,85 @@ function energy(func::Functional{:gga}, ρ::AbstractVector{T},
         σstable = max(σtotal, threshold_σ(func, U))
         energy(func, ρtotal, σstable)
     end
+end
+function potential_terms(func::Functional{:hyb_gga}, ρ::AbstractMatrix{T},
+    σ::AbstractMatrix{U}) where {T,U}
+@assert has_energy(func)  # Otherwise custom implementation of this function needed
+s_ρ, n_p = size(ρ)
+s_σ = size(σ, 1)
+TT = promote_type(T, U, parameter_type(func))
+
+e  = similar(ρ, TT, n_p)
+Vρ = similar(ρ, TT, s_ρ, n_p)
+Vσ = similar(ρ, TT, s_σ, n_p)
+@views for i = 1:n_p
+potential_terms!(e[i:i], Vρ[:, i], Vσ[:, i], func, ρ[:, i], σ[:, i])
+end
+(; e, Vρ, Vσ)
+end
+function potential_terms!(e, Vρ, Vσ, func::Functional{:hyb_gga},
+     ρ::AbstractVector, σ::AbstractVector)
+res = ForwardDiff.gradient!(DiffResults.DiffResult(zero(eltype(e)), Vρ),
+           ρ -> energy(func, ρ, σ), ρ)
+ForwardDiff.gradient!(DiffResults.DiffResult(zero(eltype(e)), Vσ),
+     σ -> energy(func, ρ, σ), σ)
+e .= DiffResults.value(res)
+nothing
+end
+
+function kernel_terms(func::Functional{:hyb_gga}, ρ::AbstractMatrix{T},
+ σ::AbstractMatrix{U}) where {T,U}
+@assert has_energy(func)  # Otherwise custom implementation of this function needed
+s_ρ, n_p = size(ρ)
+s_σ = size(σ, 1)
+TT = promote_type(T, U, parameter_type(func))
+
+e   = similar(ρ, TT, n_p)
+Vρ  = similar(ρ, TT, s_ρ, n_p)
+Vσ  = similar(ρ, TT, s_σ, n_p)
+Vρρ = similar(ρ, TT, s_ρ, s_ρ, n_p)
+Vρσ = similar(ρ, TT, s_ρ, s_σ, n_p)
+Vσσ = similar(ρ, TT, s_σ, s_σ, n_p)
+
+# TODO Needed to make forward-diff work with !isbits floating-point types (e.g. BigFloat)
+Vρ  .= zero(TT)
+Vσ  .= zero(TT)
+Vρρ .= zero(TT)
+Vρσ .= zero(TT)
+Vσσ .= zero(TT)
+
+@views for i = 1:n_p
+kernel_terms!(e[i:i], Vρ[:, i], Vσ[:, i],
+ Vρρ[:, :, i], Vρσ[:, :, i], Vσσ[:, :, i],
+ func, ρ[:, i], σ[:, i])
+end
+(; e, Vρ, Vσ, Vρρ, Vρσ, Vσσ)
+end
+function kernel_terms!(e, Vρ, Vσ, Vρρ, Vρσ, Vσσ, func::Functional{:hyb_gga},
+  ρ::AbstractVector, σ::AbstractVector)
+res = ForwardDiff.hessian!(DiffResults.DiffResult(zero(eltype(e)), Vρ, Vρρ),
+          ρ -> energy(func, ρ, σ), ρ)
+res = ForwardDiff.hessian!(DiffResults.DiffResult(zero(eltype(e)), Vσ, Vσσ),
+          σ -> energy(func, ρ, σ), σ)
+
+dedρ = σ -> ForwardDiff.gradient(ρ -> energy(func, ρ, σ), ρ)
+ForwardDiff.jacobian!(Vρσ, dedρ, σ)
+
+e .= DiffResults.value(res)
+nothing
+end
+
+function energy(func::Functional{:hyb_gga}, ρ::AbstractVector{T},
+σ::AbstractVector{U}) where {T,U}
+length(ρ) == 1 || error("Multiple spins not yet implemented for fallback functionals")
+@assert length(ρ) == 1
+
+ρtotal = ρ[1]
+σtotal = σ[1]
+if ρtotal ≤ threshold_ρ(func, T)
+zero(promote_type(T, U, parameter_type(func)))
+else
+σstable = max(σtotal, threshold_σ(func, U))
+energy(func, ρtotal, σstable)
+end
 end
