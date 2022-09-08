@@ -5,8 +5,10 @@ import ForwardDiff: Dual
 #       for exchange and correlation ... if it does not help, remove it again
 abstract type Functional{Family,Kind} end
 
-"""Return the family of a functional. Results are `:lda`, `:gga`, `:mgga` and
-`:mggal` (Meta-GGA requiring Laplacian of ρ)"""
+"""Return the family of a functional. Results are `:lda`, `:hyb_lda`, `:gga`,
+`:hyb_gga`, `:mgga`, `:hyb_mgga` and 
+`:mggal` (Meta-GGA requiring Laplacian of ρ)
+"""
 family(::Functional{F}) where {F} = F
 
 """
@@ -22,17 +24,17 @@ Base.show(io::IO, fun::Functional) = print(io, identifier(fun))
 @doc raw"""
 True if the functional needs ``σ = 𝛁ρ ⋅ 𝛁ρ``.
 """
-needs_σ(::Functional{F}) where {F} = (F in (:gga, :mgga, :mggal))
+needs_σ(::Functional{F}) where {F} = (F in (:gga, :hyb_gga, :mgga, :mggal))
 
 @doc raw"""
 True if the functional needs ``τ`` (kinetic energy density).
 """
-needs_τ(::Functional{F}) where {F} = (F in (:mgga, :mggal))
+needs_τ(::Functional{F}) where {F} = (F in (:mgga, :hyb_mgga, :mggal))
 
 @doc raw"""
 True if the functional needs ``Δ ρ``.
 """
-needs_Δρ(::Functional{F}) where {F} = (F in (:mggal,))
+needs_Δρ(::Functional{F}) where {F} = (F in (:mggal))
 
 """
 Does this functional support energy evaluations? Some don't, in which case
@@ -79,10 +81,12 @@ threshold_ζ(f::Functional, T::Type{<:Dual}) = threshold_ζ(f, ForwardDiff.valty
 # Silently drop extra arguments from evaluation functions
 for fun in (:potential_terms, :kernel_terms)
     @eval begin
-        $fun(func::Functional{:lda}, ρ, σ, args...)         = $fun(func, ρ)
-        $fun(func::Functional{:gga}, ρ, σ, τ, args...)      = $fun(func, ρ, σ)
-        $fun(func::Functional{:hyb_gga}, ρ, σ, τ, args...)  = $fun(func, ρ, σ)
-        $fun(func::Functional{:mgga}, ρ, σ, τ, Δρ, args...) = $fun(func, ρ, σ, τ)
+        $fun(func::Functional{:lda}, ρ, σ, args...)             = $fun(func, ρ)
+        $fun(func::Functional{:hyb_lda}, ρ, σ, args...)         = $fun(func, ρ)
+        $fun(func::Functional{:gga}, ρ, σ, τ, args...)          = $fun(func, ρ, σ)
+        $fun(func::Functional{:hyb_gga}, ρ, σ, τ, args...)      = $fun(func, ρ, σ)
+        $fun(func::Functional{:mgga}, ρ, σ, τ, Δρ, args...)     = $fun(func, ρ, σ, τ)
+        $fun(func::Functional{:hyb_mgga}, ρ, σ, τ, Δρ, args...) = $fun(func, ρ, σ, τ)
     end
 end
 
@@ -110,7 +114,8 @@ function kernel_terms end
 #
 # LDA
 #
-function potential_terms(func::Functional{:lda}, ρ::AbstractMatrix{T}) where {T}
+function potential_terms(func::Union{Functional{:lda},Functional{:hyb_lda}}, 
+    ρ::AbstractMatrix{T}) where {T}
     @assert has_energy(func)  # Otherwise custom implementation of this function needed
     s_ρ, n_p = size(ρ)
     TT = promote_type(T, parameter_type(func))
@@ -122,14 +127,15 @@ function potential_terms(func::Functional{:lda}, ρ::AbstractMatrix{T}) where {T
     end
     (; e, Vρ)
 end
-function potential_terms!(e, Vρ, func::Functional{:lda}, ρ::AbstractVector{T}) where {T}
+function potential_terms!(e, Vρ, func::Union{Functional{:lda},Functional{:hyb_lda}}, 
+    ρ::AbstractVector{T}) where {T}
     res = ForwardDiff.gradient!(DiffResults.DiffResult(zero(eltype(e)), Vρ),
                                 ρ -> energy(func, ρ), ρ)
     e .= DiffResults.value(res)
     nothing
 end
 
-function kernel_terms(func::Functional{:lda}, ρ::AbstractMatrix{T}) where {T}
+function kernel_terms(func::Union{Functional{:lda},Functional{:hyb_lda}}, ρ::AbstractMatrix{T}) where {T}
     @assert has_energy(func)
     s_ρ, n_p = size(ρ)
     TT = promote_type(T, parameter_type(func))
@@ -147,14 +153,15 @@ function kernel_terms(func::Functional{:lda}, ρ::AbstractMatrix{T}) where {T}
     end
     (; e, Vρ, Vρρ)
 end
-function kernel_terms!(e, Vρ, Vρρ, func::Functional{:lda}, ρ::AbstractVector{T}) where {T}
+function kernel_terms!(e, Vρ, Vρρ, 
+    func::Union{Functional{:lda},Functional{:hyb_lda}}, ρ::AbstractVector{T}) where {T}
     res = ForwardDiff.hessian!(DiffResults.DiffResult(zero(eltype(e)), Vρ, Vρρ),
                                ρ -> energy(func, ρ), ρ)
     e .= DiffResults.value(res)
     nothing
 end
 
-function energy(func::Functional{:lda}, ρ::AbstractVector{T}) where {T}
+function energy(func::Union{Functional{:lda},Functional{:hyb_lda}}, ρ::AbstractVector{T}) where {T}
     length(ρ) == 1 || error("Multiple spins not yet implemented for fallback functionals")
     ρtotal = ρ[1]
     if ρtotal ≤ threshold_ρ(func, T)
