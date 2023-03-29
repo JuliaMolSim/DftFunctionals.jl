@@ -20,6 +20,7 @@ jobs:
         version:
           - '1.6'
           - 'nightly'
+    continue-on-error: ${{ matrix.version == 'nightly' }}
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1
