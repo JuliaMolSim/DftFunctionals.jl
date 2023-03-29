@@ -18,9 +18,12 @@ function change_parameters(pbe::PbeExchange, parameters::ComponentArray;
 end
 
 function energy(pbe::PbeExchange, ρ::T, σ::U) where {T<:Number,U<:Number}
-    TT = promote_type(T, U, parameter_type(pbe))
-    κ = TT(pbe.parameters.κ)
-    μ = TT(pbe.parameters.μ)
+    TT = arithmetic_type(pbe, T, U)
+
+    # TODO This function is quite sensitive to the floating-point type ...
+    #      so for now we don't bother doing this in TT, but rather convert before return
+    κ = pbe.parameters.κ
+    μ = pbe.parameters.μ
 
     pbe_x_f(s²) = 1 + κ - κ^2 / (κ + μ * s²)   # (14)
     # rₛ = cbrt(3 / (4π  * ρ))                 # page 2, left column, top
@@ -28,7 +31,8 @@ function energy(pbe::PbeExchange, ρ::T, σ::U) where {T<:Number,U<:Number}
     # s  = sqrt(σ) / (2kF * ρ)                 # below (9)
     s² = σ / (ρ^(4 / 3) * 2cbrt(3π^2))^2
 
-    energy(LdaExchange(), ρ) * pbe_x_f(s²)     # (10)
+    res = energy(LdaExchange(), ρ) * pbe_x_f(s²)     # (10)
+    TT(res)
 end
 
 # Conversion between μ and β (some authors use one, some the other)

@@ -1,7 +1,7 @@
 name = "DftFunctionals"
 uuid = "6bd331d2-b28d-4fd3-880e-1a1c7f37947f"
 authors = ["Michael F. Herbst <info@michael-herbst.com>"]
-version = "0.2.1"
+version = "0.2.2"
 
 [deps]
 ComponentArrays = "b0b7db55-cfe3-40fc-9ded-d10e2dbeff66"
