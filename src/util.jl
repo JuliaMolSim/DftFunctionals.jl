@@ -20,9 +20,11 @@ end
 
 
 """
-Determine the working precision of the functional evaluation. This takes the type
-of the parameters of Functional into account, but only in case this type is not a plain
-`AbstractFloat` (e.g. to allow duals to get pushed through).
+Determine the working precision of the functional evaluation. This only takes the type
+of the parameters of Functional into account if this is not a plain `AbstractFloat`
+(e.g. to allow duals to get pushed through). Otherwise the precision of the passed
+number types always win (to ensure that `Float32` density data causes a `Float32`
+functional evaluation even if the functional parameters are stored in `Float64`.
 """
 function arithmetic_type(func::Functional, T, S...)
     arithmetic_type_(eltype(parameters(func)), T, S...)
