@@ -238,7 +238,7 @@ function energy(func::Functional{:gga}, ρ::AbstractVector{T},
     ρtotal = ρ[1]
     σtotal = σ[1]
     if ρtotal ≤ threshold_ρ(func, T)
-        zero(promote_type(T, U, parameter_type(func)))
+        zero(arithmetic_type(func, T, U))
     else
         σstable = max(σtotal, threshold_σ(func, U))
         energy(func, ρtotal, σstable)
