@@ -109,7 +109,7 @@ function kernel_terms end
 function potential_terms(func::Functional{:lda}, ρ::AbstractMatrix{T}) where {T}
     @assert has_energy(func)  # Otherwise custom implementation of this function needed
     s_ρ, n_p = size(ρ)
-    TT = working_precision(func, T)
+    TT = arithmetic_type(func, T)
 
     e  = similar(ρ, TT, n_p)
     Vρ = similar(ρ, TT, s_ρ, n_p)
@@ -128,7 +128,7 @@ end
 function kernel_terms(func::Functional{:lda}, ρ::AbstractMatrix{T}) where {T}
     @assert has_energy(func)
     s_ρ, n_p = size(ρ)
-    TT = working_precision(func, T)
+    TT = arithmetic_type(func, T)
 
     e   = similar(ρ, TT, n_p)
     Vρ  = similar(ρ, TT, s_ρ, n_p)
@@ -168,7 +168,7 @@ function potential_terms(func::Functional{:gga}, ρ::AbstractMatrix{T},
     @assert has_energy(func)  # Otherwise custom implementation of this function needed
     s_ρ, n_p = size(ρ)
     s_σ = size(σ, 1)
-    TT = working_precision(func, T, U)
+    TT = arithmetic_type(func, T, U)
 
     e  = similar(ρ, TT, n_p)
     Vρ = similar(ρ, TT, s_ρ, n_p)
@@ -193,7 +193,7 @@ function kernel_terms(func::Functional{:gga}, ρ::AbstractMatrix{T},
     @assert has_energy(func)  # Otherwise custom implementation of this function needed
     s_ρ, n_p = size(ρ)
     s_σ = size(σ, 1)
-    TT = working_precision(func, T, U)
+    TT = arithmetic_type(func, T, U)
 
     e   = similar(ρ, TT, n_p)
     Vρ  = similar(ρ, TT, s_ρ, n_p)

@@ -22,10 +22,10 @@ end
 """
 Determine the working precision of the functional evaluation. This takes the type
 of the parameters of Functional into account, but only in case this type is not a plain
-number (e.g. to allow duals to get pushed through).
+`AbstractFloat` (e.g. to allow duals to get pushed through).
 """
-function working_precision(func::Functional, T, S...)
-    working_precision_(eltype(parameters(func)), T, S...)
+function arithmetic_type(func::Functional, T, S...)
+    arithmetic_type_(eltype(parameters(func)), T, S...)
 end
-working_precision_(::Type{<:Number}, T::Type, S...) = promote_type(T, S...)
-working_precision_(PT::Type, T, S...)               = promote_type(PT, T, S...)
+arithmetic_type_(::Type{<:AbstractFloat}, T::Type, S...) = promote_type(T, S...)
+arithmetic_type_(PT::Type, T, S...) = promote_type(PT, T, S...)

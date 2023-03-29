@@ -23,7 +23,7 @@ function change_parameters(pbe::PbeCorrelation, parameters::ComponentArray;
 end
 
 function energy(pbe::PbeCorrelation, ρ::T, σ::U) where {T<:Number,U<:Number}
-    TT = working_precision(pbe, T, U)
+    TT = arithmetic_type(pbe, T, U)
 
     # TODO This function is quite sensitive to the floating-point type ...
     #      so for now we don't bother doing this in TT, but rather convert before return
