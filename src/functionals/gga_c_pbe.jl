@@ -23,13 +23,12 @@ function change_parameters(pbe::PbeCorrelation, parameters::ComponentArray;
 end
 
 function energy(pbe::PbeCorrelation, ρ::T, σ::U) where {T<:Number,U<:Number}
-    TT = promote_type(T, U, parameter_type(pbe))
+    TT = working_precision(pbe, T, U)
 
-    # TODO This function is quite sensitive to the floating-point type.
-    #      We could probably be more clever, but for now we enforce at least Float64
-    WP = promote_type(TT, Float64)
-    β = WP(pbe.parameters.β)
-    γ = WP(pbe.parameters.γ)
+    # TODO This function is quite sensitive to the floating-point type ...
+    #      so for now we don't bother doing this in TT, but rather convert before return
+    β = pbe.parameters.β
+    γ = pbe.parameters.γ
 
     # Spin-scaling factor with ζ spin polarization.
     # Yue Wang and John P. Perdew. Phys. Rev. B 43, 8911 (1991).
