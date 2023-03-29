@@ -24,8 +24,12 @@ end
 
 function energy(pbe::PbeCorrelation, ρ::T, σ::U) where {T<:Number,U<:Number}
     TT = promote_type(T, U, parameter_type(pbe))
-    β = TT(pbe.parameters.β)
-    γ = TT(pbe.parameters.γ)
+
+    # TODO This function is quite sensitive to the floating-point type.
+    #      We could probably be more clever, but for now we enforce at least Float64
+    WP = promote_type(TT, Float64)
+    β = WP(pbe.parameters.β)
+    γ = WP(pbe.parameters.γ)
 
     # Spin-scaling factor with ζ spin polarization.
     # Yue Wang and John P. Perdew. Phys. Rev. B 43, 8911 (1991).
@@ -42,7 +46,9 @@ function energy(pbe::PbeCorrelation, ρ::T, σ::U) where {T<:Number,U<:Number}
     phi = 1.0 #= ϕ(ζ) =#
     ε_lda = energy_per_particle(pbe.lda, ρ)
     t² = (1 / 12 * 3^(5 / 6) * π^(1 / 6))^2 * σ / (phi^2 * ρ^(7 / 3))  # page 2, left column, top
-    (ε_lda + H(ε_lda, t², phi^3)) * ρ
+    res = (ε_lda + H(ε_lda, t², phi^3)) * ρ
+
+    TT(res)
 end
 
 #

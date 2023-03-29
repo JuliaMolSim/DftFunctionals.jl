@@ -143,8 +143,10 @@ end
             @test result.Vρσ  ≈ Vρσref atol=5e-13
             @test result.Vσσ  ≈ Vσσref atol=5e-13
 
-            e = DftFunctionals.energy(func, rand(Float32), rand(Float32))
-            @test_broken eltype(e) == Float32
+            # Ensure Float32 evaluation works (if parameters are forcibly down-casted to 32bit)
+            func32 = DftFunctional(Float32, func_name)
+            e = DftFunctionals.energy(func32, rand(Float32), rand(Float32))
+            @test eltype(e) == Float32
         end
     end
 end
