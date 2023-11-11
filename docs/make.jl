@@ -6,11 +6,11 @@ DocMeta.setdocmeta!(DftFunctionals, :DocTestSetup, :(using DftFunctionals); recu
 makedocs(;
     modules=[DftFunctionals],
     authors="Michael F. Herbst <info@michael-herbst.com>",
-    repo="https://github.com/JuliaMolSim/DftFunctionals.jl/blob/{commit}{path}#{line}",
-    sitename="DftFunctionals.jl",
+    sitename="DftFunctionals",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://juliamolsim.github.io/DftFunctionals.jl",
+        edit_link="master",
         assets=String[],
     ),
     pages=[
@@ -18,6 +18,7 @@ makedocs(;
         "interface.md",
         "generic.md",
     ],
+    checkdocs=:exports,
 )
 
 deploydocs(;
