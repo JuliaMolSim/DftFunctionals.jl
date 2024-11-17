@@ -43,6 +43,14 @@ end
     end
 end
 
+@testset "Parameter interface defaults" begin
+    struct NewExchange <: Functional{:lda,:x}
+    end
+    f = NewExchange()
+    @test parameters(f) == ComponentArray{Bool}()
+    x = ComponentArray{Bool}()
+    @test_throws MethodError change_parameters(f, x)
+end
 
 @testset "LDA potential (without spin)" begin
     ρ     = [0.1, 0.2, 0.3, 0.4, 0.5]
