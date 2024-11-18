@@ -53,8 +53,10 @@ Generally the identifier of the functional will be changed to reflect the
 change in parameter values unless `keep_identifier` is true.
 To get the tuple of adjustable parameters and their current values check out
 [`parameters`](@ref). It is not checked that the correct parameters are passed.
+
+`change_parameters(f::Functional, params_new; keep_identifier=false)::Functional`
 """
-change_parameters(f::Functional, ::AbstractArray; keep_identifier=false) = f
+function change_parameters end
 
 # TODO These values are read-only for now and their defaults hard-coded for Float64
 """
