@@ -10,22 +10,34 @@ concurrency:
   # Cancel intermediate builds: only if it is a pull request build.
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
 jobs:
   test:
-    name: Julia ${{ matrix.version }}
+    name: Julia ${{ matrix.mode }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        version:
-          - '1.10'
-          - 'nightly'
-    continue-on-error: ${{ matrix.version == 'nightly' }}
+        mode:
+          - stable
+          - latest
     steps:
       - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
+
+      - name: Setup Julia stable
+        uses: julia-actions/setup-julia@v2
         with:
-          version: ${{ matrix.version }}
+          version: '1.10'
+          arch: x64
+        if: ${{ matrix.mode == 'stable' }}
+      - name: Setup Julia latest (pre-releases included)
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+          include-all-prereleases: true
+          arch: x64
+        if: ${{ matrix.mode == 'latest' }}
+
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
@@ -33,6 +45,7 @@ jobs:
       - uses: codecov/codecov-action@v5
         with:
           files: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   docs:
     name: Documentation
