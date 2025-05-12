@@ -11,7 +11,14 @@ include("libxc.jl")
         :gga_x_xpbe,    :gga_c_xpbe,
         :gga_x_pbe_mol, :gga_c_pbe_mol,
         :gga_x_apbe,    :gga_c_apbe,
+
+        :gga_c_lyp
     )
+
+    kernel_atol = Dict(
+        :gga_c_lyp => 1e-11,  # Note the numerical stability issues here
+    )
+
 
 @testset "LDA Functional construction" begin
     let f = DftFunctional(:lda_x)
@@ -147,9 +154,9 @@ end
             @test result.e    ≈ eref   atol=5e-13
             @test result.Vρ   ≈ Vρref  atol=5e-13
             @test result.Vσ   ≈ Vσref  atol=5e-13
-            @test result.Vρρ  ≈ Vρρref atol=5e-13
-            @test result.Vρσ  ≈ Vρσref atol=5e-13
-            @test result.Vσσ  ≈ Vσσref atol=5e-13
+            @test result.Vρρ  ≈ Vρρref atol=get(kernel_atol, func_name, 5e-13)
+            @test result.Vρσ  ≈ Vρσref atol=get(kernel_atol, func_name, 5e-13)
+            @test result.Vσσ  ≈ Vσσref atol=get(kernel_atol, func_name, 5e-13)
 
             # Ensure Float32 evaluation works
             e = DftFunctionals.energy(func, rand(Float32), rand(Float32))
