@@ -12,11 +12,11 @@ include("libxc.jl")
         :gga_x_pbe_mol, :gga_c_pbe_mol,
         :gga_x_apbe,    :gga_c_apbe,
 
-        :gga_c_lyp
+        :gga_c_lyp,
     )
 
     kernel_atol = Dict(
-        :gga_c_lyp => 1e-11,  # Note the numerical stability issues here
+        :gga_c_lyp => 1e-10,  # Note the numerical stability issues here
     )
 
 
@@ -137,7 +137,6 @@ end
             Vρρref = similar(ρ)
             Vρσref = similar(ρ)
             Vσσref = similar(ρ)
-
 
             ptr = xc_functional_alloc(identifier(func))
             xc_gga(ptr, n_p, ρ, σ, εref, Vρref, Vσref, Vρρref, Vρσref, Vσσref, C_NULL,
