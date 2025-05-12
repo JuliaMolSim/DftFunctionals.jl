@@ -43,7 +43,7 @@ function energy_per_particle(::LdaCorrelationVwn, ρ::T) where {T<:Number}
     Xx0 = x0^2 + b * x0 + c
     Q   = sqrt(4c - b^2)
     A * (log(x^2 / Xx) + 2b / Q * atan(Q / (2x + b)) -
-     b * x0 / Xx0 * (log((x - x0)^2 / Xx) + 2 * (b + 2x0) / Q * atan(Q / (2x + b))))
+    b * x0 / Xx0 * (log((x - x0)^2 / Xx) + 2 * (b + 2x0) / Q * atan(Q / (2x + b))))
 end
 
 #
