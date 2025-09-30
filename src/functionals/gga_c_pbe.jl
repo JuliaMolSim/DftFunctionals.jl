@@ -1,25 +1,35 @@
-struct PbeCorrelation{Tlda,CA} <:
-       Functional{:gga,:c} where {Tlda,CA<:ComponentArray{<:Number}}
-    parameters::CA
+struct PbeCorrelation{NT,Tlda,Id} <:
+    Functional{:gga,:c} where {NT<:NamedTuple,Tlda,Id<:Union{Symbol,Val}}
+    parameters::NT
     lda::Tlda
-    identifier::Symbol
+    identifier::Id
 end
-function PbeCorrelation(parameters::ComponentArray, lda=DftFunctional(:lda_c_pw))
+function PbeCorrelation(parameters::NamedTuple, lda=DftFunctional(:lda_c_pw))
     PbeCorrelation(parameters, lda, :gga_c_pbe_custom)
 end
-function PbeCorrelation(parameters::ComponentArray, identifier::Symbol)
+function PbeCorrelation(parameters::NamedTuple, identifier::Symbol)
     PbeCorrelation(parameters, DftFunctional(:lda_c_pw), identifier)
 end
 
 identifier(pbe::PbeCorrelation) = pbe.identifier
 parameters(pbe::PbeCorrelation) = pbe.parameters
-function change_parameters(pbe::PbeCorrelation, parameters::ComponentArray;
+function to_isbits(pbe::PbeCorrelation)
+    PbeCorrelation(pbe.parameters, to_isbits(pbe.lda), Val{pbe.identifier}())
+end
+function change_parameters(pbe::PbeCorrelation, parameters::NamedTuple;
                            keep_identifier=false)
     if keep_identifier
         PbeCorrelation(parameters, pbe.lda, pbe.identifier)
     else
         PbeCorrelation(parameters, pbe.lda)
     end
+end
+# Change functional parameters based on an array of values. Assumes consistent ordering.
+function change_parameters(pbe::PbeCorrelation, parameter_vals::AbstractArray;
+                           keep_identifier=false)
+    parameter_keys = keys(pbe.parameters)
+    parameters = NamedTuple{parameter_keys}(parameter_vals)
+    change_parameters(pbe, parameters; keep_identifier=keep_identifier)
 end
 
 function energy(pbe::PbeCorrelation, ρ::T, σ::U) where {T<:Number,U<:Number}
@@ -61,7 +71,7 @@ Perdew, Burke, Ernzerhof 1996 (DOI: 10.1103/PhysRevLett.77.3865)
 function DftFunctional(::Val{:gga_c_pbe})
     β = 0.06672455060314922
     γ = (1 - log(2)) / π^2
-    PbeCorrelation(ComponentArray(; β, γ), :gga_c_pbe)
+    PbeCorrelation((; β, γ), :gga_c_pbe)
 end
 
 """
@@ -72,7 +82,7 @@ function DftFunctional(::Val{:gga_c_xpbe})
     β = 0.089809  # Fitted constants, Table I
     α = 0.197363  # Fitted constants, Table I
     γ = β^2 / 2α
-    PbeCorrelation(ComponentArray(; β, γ), :gga_c_xpbe)
+    PbeCorrelation((; β, γ), :gga_c_xpbe)
 end
 
 """
@@ -82,7 +92,7 @@ Perdew, Ruzsinszky, Csonka and others 2008 (DOI 10.1103/physrevlett.100.136406)
 function DftFunctional(::Val{:gga_c_pbe_sol})
     β = 0.046  # Page 3, left column below figure 1
     γ = (1 - log(2)) / π^2
-    PbeCorrelation(ComponentArray(; β, γ), :gga_c_pbe_sol)
+    PbeCorrelation((; β, γ), :gga_c_pbe_sol)
 end
 
 """
@@ -93,7 +103,7 @@ function DftFunctional(::Val{:gga_c_apbe})
     μ = 0.260   # p. 1, right column, bottom
     β = 3μ / π^2
     γ = (1 - log(2)) / π^2  # like in PBE
-    PbeCorrelation(ComponentArray(; β, γ), :gga_c_apbe)
+    PbeCorrelation((; β, γ), :gga_c_apbe)
 end
 
 """
@@ -104,7 +114,7 @@ function DftFunctional(::Val{:gga_c_pbe_mol})
     # β made to cancel self-interaction error in hydrogen
     β = 0.08384             # p. 4, right column, first paragraph
     γ = (1 - log(2)) / π^2  # like in PBE
-    PbeCorrelation(ComponentArray(; β, γ), :gga_c_pbe_mol)
+    PbeCorrelation((; β, γ), :gga_c_pbe_mol)
 end
 
 """
@@ -114,5 +124,5 @@ Sarmiento-Perez, Silvana, Marques 2015 (DOI 10.1021/acs.jctc.5b00529)
 function DftFunctional(::Val{:gga_c_pbefe})
     β = 0.043                    # Fitted constants, Table I
     γ = 0.031090690869654895034  # Fitted constants, Table I
-    PbeCorrelation(ComponentArray(; β, γ), :gga_c_pbefe)
+    PbeCorrelation((; β, γ), :gga_c_pbefe)
 end

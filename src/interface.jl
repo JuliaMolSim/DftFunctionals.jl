@@ -44,7 +44,12 @@ has_energy(::Functional) = true
 """
 Return adjustable parameters of the functional and their values.
 """
-parameters(::Functional) = ComponentArray{Bool}()
+parameters(::Functional) = NamedTuple()
+
+"""
+Return a isbits version of the functional (for GPU usage)
+"""
+to_isbits(func::Functional) = func
 
 """
 Return a new version of the passed functional with its parameters adjusted.
