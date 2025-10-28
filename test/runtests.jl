@@ -183,6 +183,7 @@ end
 
 @testset "PBE exchange parameter derivatives" begin
     using ForwardDiff
+    using ComponentArrays
 
     pbe = DftFunctional(:gga_x_pbe)
 
@@ -192,7 +193,7 @@ end
     σ = reshape(σ, 1, :)
 
     # ForwardDiff expects functions that take arrays as arguments
-    θ = collect(values(parameters(pbe)))
+    θ = ComponentArray(parameters(pbe))
     egrad = ForwardDiff.jacobian(θ) do θ
         potential_terms(change_parameters(pbe, θ), ρ, σ).e
     end
@@ -210,6 +211,7 @@ end
 
 @testset "PBE correlation parameter derivatives" begin
     using ForwardDiff
+    using ComponentArrays
 
     pbe = DftFunctional(:gga_c_pbe)
 
@@ -219,7 +221,7 @@ end
     σ = reshape(σ, 1, :)
 
     # ForwardDiff expects functions that take arrays as arguments
-    θ = collect(values(parameters(pbe)))
+    θ = ComponentArray(parameters(pbe))
     egrad = ForwardDiff.jacobian(θ) do θ
         potential_terms(change_parameters(pbe, θ), ρ, σ).e
     end

@@ -4,11 +4,11 @@ struct PbeCorrelation{NT,Tlda,Id} <:
     lda::Tlda
     identifier::Id
 end
-function PbeCorrelation(parameters::NamedTuple, lda=DftFunctional(:lda_c_pw))
-    PbeCorrelation(parameters, lda, :gga_c_pbe_custom)
+function PbeCorrelation(parameters, lda=DftFunctional(:lda_c_pw))
+    PbeCorrelation(NamedTuple(parameters), lda, :gga_c_pbe_custom)
 end
-function PbeCorrelation(parameters::NamedTuple, identifier::Symbol)
-    PbeCorrelation(parameters, DftFunctional(:lda_c_pw), identifier)
+function PbeCorrelation(parameters, identifier::Symbol)
+    PbeCorrelation(NamedTuple(parameters), DftFunctional(:lda_c_pw), identifier)
 end
 
 identifier(pbe::PbeCorrelation) = pbe.identifier
@@ -16,20 +16,13 @@ parameters(pbe::PbeCorrelation) = pbe.parameters
 function to_isbits(pbe::PbeCorrelation)
     PbeCorrelation(pbe.parameters, to_isbits(pbe.lda), Val{pbe.identifier}())
 end
-function change_parameters(pbe::PbeCorrelation, parameters::NamedTuple;
+function change_parameters(pbe::PbeCorrelation, parameters;
                            keep_identifier=false)
     if keep_identifier
-        PbeCorrelation(parameters, pbe.lda, pbe.identifier)
+        PbeCorrelation(NamedTuple(parameters), pbe.lda, pbe.identifier)
     else
-        PbeCorrelation(parameters, pbe.lda)
+        PbeCorrelation(NamedTuple(parameters), pbe.lda)
     end
-end
-# Change functional parameters based on an array of values. Assumes consistent ordering.
-function change_parameters(pbe::PbeCorrelation, parameter_vals::AbstractArray;
-                           keep_identifier=false)
-    parameter_keys = keys(pbe.parameters)
-    parameters = NamedTuple{parameter_keys}(parameter_vals)
-    change_parameters(pbe, parameters; keep_identifier=keep_identifier)
 end
 
 function energy(pbe::PbeCorrelation, ρ::T, σ::U) where {T<:Number,U<:Number}
