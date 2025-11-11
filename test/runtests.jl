@@ -17,18 +17,18 @@ include("libxc.jl")
     let f = DftFunctional(:lda_x)
         @test kind(f)       == :x
         @test family(f)     == :lda
-        @test identifier(f) == :lda_x
         @test !needs_σ(f)
         @test !needs_τ(f)
         @test !needs_Δρ(f)
         @test has_energy(f)
+        @test isbits(f)
     end
 
     for id in (:lda_c_vwn, :lda_c_pw)
         f = DftFunctional(id)
         @test kind(f)       == :c
         @test family(f)     == :lda
-        @test identifier(f) == id
+        @test isbits(f)
     end
 end
 
@@ -36,20 +36,11 @@ end
     for id in gga_fallback
         f = DftFunctional(id)
         @test family(f) == :gga
-        @test identifier(f) == id
         @test needs_σ(f)
         @test !needs_τ(f)
         @test !needs_Δρ(f)
+        @test isbits(f)
     end
-end
-
-@testset "Parameter interface defaults" begin
-    struct NewExchange <: Functional{:lda,:x}
-    end
-    f = NewExchange()
-    @test parameters(f) == ComponentArray{Bool}()
-    x = ComponentArray{Bool}()
-    @test_throws MethodError change_parameters(f, x)
 end
 
 @testset "LDA potential (without spin)" begin
@@ -83,26 +74,29 @@ end
 
 
 @testset "Fallback <-> Libxc (LDA, without spin)" begin
-    # Note: Libxc defaults to the PW correlation functional as published,
-    #       we to an improved form with better constants ... that's why we need
-    #       the improved=false below.
-    for func in (DftFunctional(:lda_x),
-                 DftFunctional(:lda_c_vwn),
-                 DftFunctional(:lda_c_pw; improved=false))
-        @testset "$(identifier(func))" begin
+    for id in (:lda_x, :lda_c_vwn, :lda_c_pw)
+        @testset "$(id)" begin
             n_p   = 100
             ρ     = abs.(randn(1, n_p))
             εref  = similar(ρ, n_p)
             Vref  = similar(ρ)
             V2ref = similar(ρ)
 
-            ptr = xc_functional_alloc(identifier(func))
+            ptr = xc_functional_alloc(id)
             xc_lda(ptr, n_p, ρ, εref, Vref, V2ref, C_NULL, C_NULL)
             xc_functional_free(ptr)
 
             eref  = εref .* ρ[1, :]
             V2ref = reshape(V2ref, 1, 1, :)
 
+            func = if id == :lda_c_pw
+                # Note: Libxc defaults to the PW correlation functional as published,
+                #       we to an improved form with better constants ... that's why we need
+                #       the improved=false below.
+                DftFunctional(id; improved=false)
+            else
+                DftFunctional(id)
+            end
             # Compute in fallback implementation in elevated precision
             result = kernel_terms(func, Array{BigFloat}(ρ))
             @test result.e   ≈ eref  atol=5e-13
@@ -132,7 +126,7 @@ end
             Vσσref = similar(ρ)
 
 
-            ptr = xc_functional_alloc(identifier(func))
+            ptr = xc_functional_alloc(func_name)
             xc_gga(ptr, n_p, ρ, σ, εref, Vρref, Vσref, Vρρref, Vρσref, Vσσref, C_NULL,
                    C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL)
             xc_functional_free(ptr)
@@ -166,18 +160,6 @@ end
 end
 
 @testset "PBE functionals" begin
-    pbe = DftFunctional(:gga_x_pbe)
-    @test :μ in keys(parameters(pbe))
-    @test :κ in keys(parameters(pbe))
-
-    pbemod = change_parameters(pbe, ComponentArray(;μ=12, κ=1.2))
-    @test parameters(pbemod).μ == 12
-    @test parameters(pbemod).κ == 1.2
-
-    pbemod = change_parameters(DftFunctional(:gga_c_pbe), ComponentArray(;β=12, γ=1.2))
-    @test parameters(pbemod).β == 12
-    @test parameters(pbemod).γ == 1.2
-
     μ = rand()
     @test μ ≈ DftFunctionals.pbe_μ_from_β(DftFunctionals.pbe_β_from_μ(μ))
 end
@@ -192,17 +174,17 @@ end
     ρ = reshape(ρ, 1, :)
     σ = reshape(σ, 1, :)
 
-    θ = ComponentArray(; parameters(pbe)...)
+    θ = ComponentArray(; pbe.κ, pbe.μ)
     egrad = ForwardDiff.jacobian(θ) do θ
-        potential_terms(change_parameters(pbe, θ), ρ, σ).e
+        potential_terms(PbeExchange(; θ...), ρ, σ).e
     end
 
     egrad_fd = let ε=1e-5
         δ = zero(θ)
         δ[2] = ε
 
-        (  potential_terms(change_parameters(pbe, θ + δ), ρ, σ).e
-         - potential_terms(change_parameters(pbe, θ - δ), ρ, σ).e) / 2ε
+        (  potential_terms(PbeExchange(; (θ + δ)...), ρ, σ).e
+         - potential_terms(PbeExchange(; (θ - δ)...), ρ, σ).e) / 2ε
     end
 
     @test maximum(abs, egrad[:, 2] - egrad_fd) < 1e-5
