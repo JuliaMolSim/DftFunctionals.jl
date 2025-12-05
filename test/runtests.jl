@@ -17,6 +17,7 @@ include("libxc.jl")
     let f = DftFunctional(:lda_x)
         @test kind(f)       == :x
         @test family(f)     == :lda
+        @test identifier(f) == :lda_x
         @test !needs_σ(f)
         @test !needs_τ(f)
         @test !needs_Δρ(f)
@@ -28,6 +29,7 @@ include("libxc.jl")
         f = DftFunctional(id)
         @test kind(f)       == :c
         @test family(f)     == :lda
+        @test identifier(f) == id
         @test isbits(f)
     end
 end
@@ -36,11 +38,20 @@ end
     for id in gga_fallback
         f = DftFunctional(id)
         @test family(f) == :gga
+        @test identifier(f) == id
         @test needs_σ(f)
         @test !needs_τ(f)
         @test !needs_Δρ(f)
         @test isbits(f)
     end
+
+    customgga = PbeExchange(κ=1.0, μ=0.5)
+    @test family(customgga) == :gga
+    @test identifier(customgga) === nothing
+    @test needs_σ(customgga)
+    @test !needs_τ(customgga)
+    @test !needs_Δρ(customgga)
+    @test isbits(customgga)
 end
 
 @testset "LDA potential (without spin)" begin
@@ -74,29 +85,26 @@ end
 
 
 @testset "Fallback <-> Libxc (LDA, without spin)" begin
-    for id in (:lda_x, :lda_c_vwn, :lda_c_pw)
-        @testset "$(id)" begin
+    # Note: Libxc defaults to the PW correlation functional as published,
+    #       we to an improved form with better constants ... that's why we need
+    #       the improved=false below.
+    for func in (DftFunctional(:lda_x),
+                 DftFunctional(:lda_c_vwn),
+                 DftFunctional(:lda_c_pw; improved=false))
+        @testset "$(identifier(func))" begin
             n_p   = 100
             ρ     = abs.(randn(1, n_p))
             εref  = similar(ρ, n_p)
             Vref  = similar(ρ)
             V2ref = similar(ρ)
 
-            ptr = xc_functional_alloc(id)
+            ptr = xc_functional_alloc(identifier(func))
             xc_lda(ptr, n_p, ρ, εref, Vref, V2ref, C_NULL, C_NULL)
             xc_functional_free(ptr)
 
             eref  = εref .* ρ[1, :]
             V2ref = reshape(V2ref, 1, 1, :)
 
-            func = if id == :lda_c_pw
-                # Note: Libxc defaults to the PW correlation functional as published,
-                #       we to an improved form with better constants ... that's why we need
-                #       the improved=false below.
-                DftFunctional(id; improved=false)
-            else
-                DftFunctional(id)
-            end
             # Compute in fallback implementation in elevated precision
             result = kernel_terms(func, Array{BigFloat}(ρ))
             @test result.e   ≈ eref  atol=5e-13
@@ -126,7 +134,7 @@ end
             Vσσref = similar(ρ)
 
 
-            ptr = xc_functional_alloc(func_name)
+            ptr = xc_functional_alloc(identifier(func))
             xc_gga(ptr, n_p, ρ, σ, εref, Vρref, Vσref, Vρρref, Vρσref, Vσσref, C_NULL,
                    C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL)
             xc_functional_free(ptr)

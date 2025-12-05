@@ -44,65 +44,52 @@ end
 # Concrete functionals
 #
 
-"""
-Standard PBE correlation.
-Perdew, Burke, Ernzerhof 1996 (DOI: 10.1103/PhysRevLett.77.3865)
-"""
-function DftFunctional(::Val{:gga_c_pbe})
-    β = 0.06672455060314922
-    γ = (1 - log(2)) / π^2
-    PbeCorrelation(; β, γ)
-end
-
-"""
-XPBE correlation.
-Xu, Goddard 2004 (DOI 10.1063/1.1771632)
-"""
-function DftFunctional(::Val{:gga_c_xpbe})
-    β = 0.089809  # Fitted constants, Table I
-    α = 0.197363  # Fitted constants, Table I
-    γ = β^2 / 2α
-    PbeCorrelation(; β, γ)
-end
-
-"""
-PBESol correlation.
-Perdew, Ruzsinszky, Csonka and others 2008 (DOI 10.1103/physrevlett.100.136406)
-"""
-function DftFunctional(::Val{:gga_c_pbe_sol})
-    β = 0.046  # Page 3, left column below figure 1
-    γ = (1 - log(2)) / π^2
-    PbeCorrelation(; β, γ)
-end
-
-"""
-APBE correlation.
-Constantin, Fabiano, Laricchia 2011 (DOI 10.1103/physrevlett.106.186406)
-"""
-function DftFunctional(::Val{:gga_c_apbe})
-    μ = 0.260   # p. 1, right column, bottom
-    β = 3μ / π^2
-    γ = (1 - log(2)) / π^2  # like in PBE
-    PbeCorrelation(; β, γ)
-end
-
-"""
-PBEmol correlation.
-del Campo, Gazqez, Trickey and others 2012 (DOI 10.1063/1.3691197)
-"""
-function DftFunctional(::Val{:gga_c_pbe_mol})
+const KNOWN_C_PBE = [
+    # Standard PBE correlation.
+    # Perdew, Burke, Ernzerhof 1996 (DOI: 10.1103/PhysRevLett.77.3865)
+    :gga_c_pbe => (; β=0.06672455060314922, γ=(1 - log(2)) / π^2),
+    # XPBE correlation.
+    # Xu, Goddard 2004 (DOI 10.1063/1.1771632)
+    :gga_c_xpbe => let
+        β = 0.089809  # Fitted constants, Table I
+        α = 0.197363  # Fitted constants, Table I
+        γ = β^2 / 2α
+        (; β, γ)
+    end,
+    # PBESol correlation.
+    # Perdew, Ruzsinszky, Csonka and others 2008 (DOI 10.1103/physrevlett.100.136406)
+    # Page 3, left column below figure 1
+    :gga_c_pbe_sol => (; β=0.046, γ=(1 - log(2)) / π^2),
+    # APBE correlation.
+    # Constantin, Fabiano, Laricchia 2011 (DOI 10.1103/physrevlett.106.186406)
+    :gga_c_apbe => let
+        μ = 0.260   # p. 1, right column, bottom
+        β = 3μ / π^2
+        γ = (1 - log(2)) / π^2  # like in PBE
+        (; β, γ)
+    end,
+    # PBEmol correlation.
+    # del Campo, Gazqez, Trickey and others 2012 (DOI 10.1063/1.3691197)
     # β made to cancel self-interaction error in hydrogen
-    β = 0.08384             # p. 4, right column, first paragraph
-    γ = (1 - log(2)) / π^2  # like in PBE
-    PbeCorrelation(; β, γ)
+    # p. 4, right column, first paragraph
+    :gga_c_pbe_mol => (; β=0.08384, γ=(1 - log(2)) / π^2),
+    # PBEfe correlation.
+    # Sarmiento-Perez, Silvana, Marques 2015 (DOI 10.1021/acs.jctc.5b00529)
+    # Fitted constants, Table I
+    :gga_c_pbefe => (; β=0.043, γ=0.031090690869654895034),
+]
+
+for (id, param) in KNOWN_C_PBE
+    @eval function DftFunctional(::Val{$(QuoteNode(id))})
+        PbeCorrelation(β=$(param.β), γ=$(param.γ))
+    end
 end
 
-"""
-PBEfe correlation.
-Sarmiento-Perez, Silvana, Marques 2015 (DOI 10.1021/acs.jctc.5b00529)
-"""
-function DftFunctional(::Val{:gga_c_pbefe})
-    β = 0.043                    # Fitted constants, Table I
-    γ = 0.031090690869654895034  # Fitted constants, Table I
-    PbeCorrelation(; β, γ)
+function identifier(pbe::PbeCorrelation)
+    for (id, param) in KNOWN_C_PBE
+        if pbe.β ≈ param.β && pbe.γ ≈ param.γ
+            return id
+        end
+    end
+    nothing
 end

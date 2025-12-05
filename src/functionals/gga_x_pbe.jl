@@ -35,61 +35,44 @@ pbe_β_from_μ(μ) = 3μ / π^2
 # Concrete functionals
 #
 
-"""
-Standard PBE exchange.
-Perdew, Burke, Ernzerhof 1996 (DOI: 10.1103/PhysRevLett.77.3865)
-"""
-function DftFunctional(::Val{:gga_x_pbe})
-    PbeExchange(κ=0.8040, μ=pbe_μ_from_β(0.06672455060314922))
-end
-
-"""
-Revised PBE exchange.
-Zhang, Yang 1998 (DOI 10.1103/physrevlett.80.890)
-"""
-function DftFunctional(::Val{:gga_x_pbe_r})
-    PbeExchange(κ=1.245, μ=pbe_μ_from_β(0.06672455060314922))
-end
-
-"""
-XPBE exchange.
-Xu, Goddard 2004 (DOI 10.1063/1.1771632)
-"""
-function DftFunctional(::Val{:gga_x_xpbe})
-    PbeExchange(κ=0.91954, μ=0.23214)  # Table 1
-end
-
-"""
-PBESol exchange.
-Perdew, Ruzsinszky, Csonka and others 2008 (DOI 10.1103/physrevlett.100.136406)
-"""
-function DftFunctional(::Val{:gga_x_pbe_sol})
+const KNOWN_X_PBE = [
+    # Standard PBE exchange.
+    # Perdew, Burke, Ernzerhof 1996 (DOI: 10.1103/PhysRevLett.77.3865)
+    :gga_x_pbe     => (; κ=0.8040, μ=pbe_μ_from_β(0.06672455060314922)),
+    # Revised PBE exchange.
+    # Zhang, Yang 1998 (DOI 10.1103/physrevlett.80.890)
+    :gga_x_pbe_r   => (; κ=1.245, μ=pbe_μ_from_β(0.06672455060314922)),
+    # XPBE exchange.
+    # Xu, Goddard 2004 (DOI 10.1063/1.1771632)
+    :gga_x_xpbe    => (; κ=0.91954, μ=0.23214), # Table 1
+    # PBESol exchange.
+    # Perdew, Ruzsinszky, Csonka and others 2008 (DOI 10.1103/physrevlett.100.136406)
     # μ given below equation (2)
-    PbeExchange(κ=0.8040, μ=10 / 81)
-end
-
-"""
-APBE exchange.
-Constantin, Fabiano, Laricchia 2011 (DOI 10.1103/physrevlett.106.186406)
-"""
-function DftFunctional(::Val{:gga_x_apbe})
+    :gga_x_pbe_sol => (; κ=0.8040, μ=10 / 81),
+    # APBE exchange.
+    # Constantin, Fabiano, Laricchia 2011 (DOI 10.1103/physrevlett.106.186406)
     # p. 1, right column, bottom
-    PbeExchange(κ=0.8040, μ=0.260)
-end
-
-"""
-PBEmol exchange.
-del Campo, Gazqez, Trickey and others 2012 (DOI 10.1063/1.3691197)
-"""
-function DftFunctional(::Val{:gga_x_pbe_mol})
+    :gga_x_apbe    => (; κ=0.8040, μ=0.260),
+    # PBEmol exchange.
+    # del Campo, Gazqez, Trickey and others 2012 (DOI 10.1063/1.3691197)
     # p. 4, left column, bottom
-    PbeExchange(κ=0.8040, μ=0.27583)
+    :gga_x_pbe_mol => (; κ=0.8040, μ=0.27583),
+    # PBEfe exchange.
+    # Sarmiento-Perez, Silvana, Marques 2015 (DOI 10.1021/acs.jctc.5b00529)
+    :gga_x_pbefe   => (; κ=0.437, μ=0.346), # Table 1
+]
+
+for (id, param) in KNOWN_X_PBE
+    @eval function DftFunctional(::Val{$(QuoteNode(id))})
+        PbeExchange(κ=$(param.κ), μ=$(param.μ))
+    end
 end
 
-"""
-PBEfe exchange.
-Sarmiento-Perez, Silvana, Marques 2015 (DOI 10.1021/acs.jctc.5b00529)
-"""
-function DftFunctional(::Val{:gga_x_pbefe})
-    PbeExchange(κ=0.437, μ=0.346)  # Table 1
+function identifier(pbe::PbeExchange)
+    for (id, param) in KNOWN_X_PBE
+        if pbe.κ ≈ param.κ && pbe.μ ≈ param.μ
+            return id
+        end
+    end
+    nothing
 end

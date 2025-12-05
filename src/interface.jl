@@ -15,6 +15,20 @@ Return the functional kind: `:x` (exchange), `:c` (correlation), `:k` (kinetic) 
 """
 kind(::Functional{F,K}) where {F,K} = K
 
+"""
+Return the identifier corresponding to a functional, if available,
+and `nothing` otherwise.
+"""
+function identifier end
+function Base.show(io::IO, fun::Functional)
+    id = identifier(fun)
+    if isnothing(id)
+        Base.show_default(io, fun)
+    else
+        print(io, id)
+    end
+end
+
 @doc raw"""
 True if the functional needs ``σ = 𝛁ρ ⋅ 𝛁ρ``.
 """

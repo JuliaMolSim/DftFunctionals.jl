@@ -1,5 +1,6 @@
 struct LdaExchange <: Functional{:lda,:x}
 end
+identifier(::LdaExchange) = :lda_x
 
 """
 LDA Slater exchange (DOI: 10.1017/S0305004100016108 and 10.1007/BF01340281)
@@ -23,6 +24,7 @@ end
 #
 struct LdaCorrelationVwn <: Functional{:lda,:c}
 end
+identifier(::LdaCorrelationVwn) = :lda_c_vwn
 
 """
 VWN5 LDA correlation according to Vosko, Wilk, and Nusair, (DOI 10.1139/p80-159).
@@ -49,6 +51,7 @@ end
 #
 struct LdaCorrelationPw{Improved} <: Functional{:lda,:c}
 end
+identifier(::LdaCorrelationPw) = :lda_c_pw
 
 """
 Perdew, Wang correlation from 1992 (10.1103/PhysRevB.45.13244)
