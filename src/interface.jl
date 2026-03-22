@@ -76,13 +76,22 @@ threshold_τ(f::Functional, T::Type{<:Dual}) = threshold_τ(f, ForwardDiff.valty
 threshold_ζ(f::Functional, T::Type{<:Dual}) = threshold_ζ(f, ForwardDiff.valtype(T))
 
 # Silently drop extra arguments from evaluation functions
-for fun in (:energy, :potential_terms, :kernel_terms)
+for fun in (:energy_density, :potential_terms, :kernel_terms)
     @eval begin
         $fun(func::Functional{:lda},  ρ::AbstractArray, σ, args...)        = $fun(func, ρ)
         $fun(func::Functional{:gga},  ρ::AbstractArray, σ, τ, args...)     = $fun(func, ρ, σ)
         $fun(func::Functional{:mgga}, ρ::AbstractArray, σ, τ, Δρ, args...) = $fun(func, ρ, σ, τ)
     end
 end
+
+@doc raw"""
+    energy_density(f::Functional, ρ, [σ, τ, Δρ])
+
+Evaluate energy density a real-space grid of densities, density
+derivatives etc. Not required derivatives for the functional type will be ignored.
+Returns the energy density (energy per unit volume) on each grid point.
+"""
+function energy_density end
 
 @doc raw"""
     potential_terms(f::Functional, ρ, [σ, τ, Δρ])
@@ -108,6 +117,14 @@ function kernel_terms end
 #
 # LDA
 #
+function energy_density(func::Functional{:lda}, ρ::AbstractMatrix{T}) where {T}
+    @assert has_energy(func)  # Otherwise custom implementation of this function needed
+    n_p = size(ρ, 2)
+    map(1:n_p) do i
+        energy(func, ρ[:, i])
+    end
+end
+
 function potential_terms(func::Functional{:lda}, ρ::AbstractMatrix{T}) where {T}
     @assert has_energy(func)  # Otherwise custom implementation of this function needed
     s_ρ, n_p = size(ρ)
@@ -165,6 +182,15 @@ end
 #
 # GGA
 #
+function energy_density(func::Functional{:gga}, ρ::AbstractMatrix{T},
+                        σ::AbstractMatrix{U}) where {T,U}
+    @assert has_energy(func)  # Otherwise custom implementation of this function needed
+    n_p = size(ρ, 2)
+    map(1:n_p) do i
+        energy(func, ρ[:, i], σ[:, i])
+    end
+end
+
 function potential_terms(func::Functional{:gga}, ρ::AbstractMatrix{T},
                          σ::AbstractMatrix{U}) where {T,U}
     @assert has_energy(func)  # Otherwise custom implementation of this function needed
