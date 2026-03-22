@@ -62,6 +62,9 @@ end
     result = potential_terms(DftFunctional(:lda_x), ρ)
     @test result.e  ≈ ref_e atol=1e-7
     @test result.Vρ ≈ ref_v atol=1e-7
+
+    ene = energy_density(DftFunctional(:lda_x), ρ)
+    @test ene ≈ ref_e atol=1e-7
 end
 
 @testset "GGA potential (without spin)" begin
@@ -79,6 +82,9 @@ end
     @test result.e  ≈ ref_e  atol=1e-7
     @test result.Vρ ≈ ref_Vρ atol=1e-7
     @test result.Vσ ≈ ref_Vσ atol=1e-7
+
+    ene = energy_density(DftFunctional(:gga_x_pbe), ρ, σ)
+    @test ene ≈ ref_e atol=1e-7
 end
 
 
