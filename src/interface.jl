@@ -76,11 +76,11 @@ threshold_τ(f::Functional, T::Type{<:Dual}) = threshold_τ(f, ForwardDiff.valty
 threshold_ζ(f::Functional, T::Type{<:Dual}) = threshold_ζ(f, ForwardDiff.valtype(T))
 
 # Silently drop extra arguments from evaluation functions
-for fun in (:potential_terms, :kernel_terms)
+for fun in (:energy, :potential_terms, :kernel_terms)
     @eval begin
-        $fun(func::Functional{:lda}, ρ, σ, args...)         = $fun(func, ρ)
-        $fun(func::Functional{:gga}, ρ, σ, τ, args...)      = $fun(func, ρ, σ)
-        $fun(func::Functional{:mgga}, ρ, σ, τ, Δρ, args...) = $fun(func, ρ, σ, τ)
+        $fun(func::Functional{:lda},  ρ::AbstractArray, σ, args...)        = $fun(func, ρ)
+        $fun(func::Functional{:gga},  ρ::AbstractArray, σ, τ, args...)     = $fun(func, ρ, σ)
+        $fun(func::Functional{:mgga}, ρ::AbstractArray, σ, τ, Δρ, args...) = $fun(func, ρ, σ, τ)
     end
 end
 
