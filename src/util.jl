@@ -27,7 +27,7 @@ number types always win (to ensure that `Float32` density data causes a `Float32
 functional evaluation even if the functional parameters are stored in `Float64`.
 """
 function arithmetic_type(func::Functional, T, S...)
-    arithmetic_type_(eltype(parameters(func)), T, S...)
+    arithmetic_type_(parameters_type(func), T, S...)
 end
 arithmetic_type_(::Type{<:AbstractFloat}, T::Type, S...) = promote_type(T, S...)
 arithmetic_type_(PT::Type, T, S...) = promote_type(PT, T, S...)

@@ -1,12 +1,10 @@
 module DftFunctionals
 using ForwardDiff
-using ComponentArrays
 
 include("interface.jl")
 include("util.jl")
 export Functional
 export family, kind, identifier
-export parameters, change_parameters
 export needs_σ, needs_τ, needs_Δρ, has_energy
 export energy_density, potential_terms, kernel_terms
 export spinindex_σ

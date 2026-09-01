@@ -15,9 +15,19 @@ Return the functional kind: `:x` (exchange), `:c` (correlation), `:k` (kinetic) 
 """
 kind(::Functional{F,K}) where {F,K} = K
 
-"""Return the identifier corresponding to a functional"""
+"""
+Return the identifier corresponding to a functional, if available,
+and `nothing` otherwise.
+"""
 function identifier end
-Base.show(io::IO, fun::Functional) = print(io, identifier(fun))
+function Base.show(io::IO, fun::Functional)
+    id = identifier(fun)
+    if isnothing(id)
+        Base.show_default(io, fun)
+    else
+        print(io, id)
+    end
+end
 
 @doc raw"""
 True if the functional needs ``σ = 𝛁ρ ⋅ 𝛁ρ``.
@@ -42,21 +52,13 @@ i.e. `e` will be `false` (a strong zero).
 has_energy(::Functional) = true
 
 """
-Return adjustable parameters of the functional and their values.
-"""
-parameters(::Functional) = ComponentArray{Bool}()
+The type of the parameters of the functional. If the functional has multiple parameters,
+the result of `promote_type(...)` of the parameter types should be returned.
 
+This allows the functional to influence the computed type, for example if it contains
+Dual numbers.
 """
-Return a new version of the passed functional with its parameters adjusted.
-This may not be a copy in case no changes are done to its internal parameters.
-Generally the identifier of the functional will be changed to reflect the
-change in parameter values unless `keep_identifier` is true.
-To get the tuple of adjustable parameters and their current values check out
-[`parameters`](@ref). It is not checked that the correct parameters are passed.
-
-`change_parameters(f::Functional, params_new; keep_identifier=false)::Functional`
-"""
-function change_parameters end
+parameters_type(::Functional) = Bool # default: Bool, which promotes to any number type
 
 # TODO These values are read-only for now and their defaults hard-coded for Float64
 """
