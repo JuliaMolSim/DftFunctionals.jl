@@ -1,6 +1,5 @@
 module DftFunctionals
 using ForwardDiff
-using ComponentArrays
 
 include("interface.jl")
 include("util.jl")
