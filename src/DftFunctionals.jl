@@ -4,6 +4,7 @@ using ComponentArrays
 
 include("interface.jl")
 include("util.jl")
+include("gpu.jl")
 export Functional
 export family, kind, identifier
 export parameters, change_parameters
